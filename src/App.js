@@ -1,26 +1,35 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { Component } from 'react';
+import ButtonPlay from './components/buttonPlay'
+const API = 'https://swapi.co/api/people/';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      people: [],
+      count: null
+    };
+  }
+  componentDidMount() {
+    fetch(API)
+      .then(response => response.json())
+      .then(data => this.setState({ people: data.results, count: data.count }));
+  }
+  render() {
+    const { people, count } = this.state;
+    return (
+      <div>
+        {count}
+      <ul>
+        {people.map(person =>
+          <li key={person.name}>
+            <a href={person.name}>{person.name}</a>
+          </li>
+        )}
+      </ul>
+      <ButtonPlay />
+      </div>
+    );
+  }
 }
-
 export default App;
