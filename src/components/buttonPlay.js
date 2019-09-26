@@ -1,6 +1,5 @@
 import React from "react";
 
-const API = "https://swapi.co/api/people/";
 
 class ButtonPlay extends React.Component {
   state = { count_1: 0, count_2: 0, weight_1: 0 };
