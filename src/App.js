@@ -1,28 +1,22 @@
 import React, { Component } from "react";
-import { connect } from "react-redux";
-import { contactsFetched } from "./actions";
+
+import PlayerCard from "./components/playerCard";
+import PlayButton from "./components/playButton";
+import fetchAPI from "./api"
 
 const API = "https://swapi.co/api/people/";
-
-function fetchAPI(param) {
-  return fetch(API + param.toString(), {
-    method: "GET",
-    headers: new Headers({  })
-  }).then(response => response.json());
-}
-
-
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       people_max: null,
-      user: Object,
-      user_2: Object,
+      user: { name: "", mass: null },
+      user_2: { name: "", mass: null },
       user1_points: 0,
       user2_points: 0,
-      message: ""
+      message: "",
+      loading: 0
     };
   }
   componentDidMount() {
@@ -30,6 +24,18 @@ class App extends Component {
       .then(response => response.json())
       .then(data => this.setState({ people_max: data.count }));
   }
+
+  compareMass = (mass_1, mass_2) => {
+    if (mass_1 > mass_2) {
+      this.setState({ user1_points: this.state.user1_points + 1 });
+      this.setState({ message: "Player 1 wins" });
+    } else if (mass_2 > mass_1) {
+      this.setState({ user2_points: this.state.user2_points + 1 });
+      this.setState({ message: "Player 2 wins" });
+    } else if (mass_2 === mass_1) {
+      this.setState({ message: "Draw" });
+    }
+  };
 
   toggleButtonState = () => {
     let min = 1;
@@ -40,12 +46,11 @@ class App extends Component {
     let mass_1 = 0;
     let mass_2 = 0;
 
-    this.setState({ message: "Loading..." });
+    this.setState({ loading: 1 });
 
     fetchAPI(random)
       .then(data => {
         this.setState({ user: data }, () => {
-          console.log("1 user", this.state.user);
           if (this.state.user.mass && this.state.user.mass !== "unknown") {
             mass_1 = parseFloat(this.state.user.mass);
           } else {
@@ -54,71 +59,54 @@ class App extends Component {
         });
       })
       .then(() =>
-        fetchAPI(random_2).then(data => {
+        fetchAPI(random_2)
+        .then(data => {
           this.setState({ user_2: data }, () => {
-            console.log("2 user", this.state.user_2);
-            if (
-              this.state.user_2.mass &&
-              this.state.user_2.mass !== "unknown"
-            ) {
+            if (this.state.user_2.mass && this.state.user_2.mass !== "unknown") {
               mass_2 = parseFloat(this.state.user_2.mass);
             } else {
               mass_2 = 0;
             }
-
-            console.log("1 mass", mass_1);
-            console.log("2 mass", mass_2);
-            if (mass_1 > mass_2) {
-              console.log("1 win");
-              this.setState({ user1_points: this.state.user1_points + 1 });
-              this.setState({ message: "Wygrywa gracz 1" });
-            } else if (mass_2 > mass_1) {
-              console.log("2 win");
-              this.setState({ user2_points: this.state.user2_points + 1 });
-              this.setState({ message: "Wygrywa gracz 2" });
-            } else if (mass_2 === mass_1) {
-              this.setState({ message: "Remis" });
-            }
           });
         })
-      );
+      )
+      .then(() => {
+        this.compareMass(mass_1, mass_2);
+        this.setState({ loading: 0 });
+      });
   };
 
   render() {
-    const { user, user_2, user1_points, user2_points, message } = this.state;
+    const {
+      user,
+      user_2,
+      user1_points,
+      user2_points,
+      message,
+      loading
+    } = this.state;
     return (
       <div>
-        <div>
-          <div>
-            <p>USER 1</p>
-            <p>Points:{user1_points}</p>
-            <p>Actual Card</p>
-            <p>Name:{user.name}</p>
-            <p>Mass:{user.mass}</p>
-          </div>
-          <div>
-            <p>USER 2</p>
-            <p>Points:{user2_points}</p>
-            <p>Actual Card</p>
-            <p>Name:{user_2.name}</p>
-            <p>Mass:{user_2.mass}</p>
-          </div>
-        </div>
-        <button onClick={this.toggleButtonState}> Click me </button>
-        <p>{message}</p>
+        <PlayerCard
+          player="1"
+          name={user.name}
+          mass={user.mass}
+          points={user1_points}
+        />
+        <PlayerCard
+          player="2"
+          name={user_2.name}
+          mass={user_2.mass}
+          points={user2_points}
+        />
+        <PlayButton
+          loading={loading}
+          message={message}
+          toggleButtonState={this.toggleButtonState}
+        />
       </div>
     );
   }
 }
 
-const mapStateToProps = state => {
-  return {
-    contacts: state.people
-  };
-};
-const mapDispatchToProps = { contactsFetched };
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(App);
+export default App;
